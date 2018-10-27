@@ -1,0 +1,112 @@
+<!doctype html>
+<html class="no-js" lang="">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="x-ua-compatible" content="ie=edge">
+  <title></title>
+  <meta name="description" content="">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+  <link rel="manifest" href="site.webmanifest">
+  <link rel="apple-touch-icon" href="icon.png">
+  <!-- Place favicon.ico in the root directory -->
+
+  <link rel="stylesheet" href="css/normalize.css">
+  <link rel="stylesheet" href="./css/main.css">
+</head>
+
+<body>
+  <!--[if lte IE 9]>
+    <p class="browserupgrade">You are using an <strong>outdated</strong> browser. Please <a href="https://browsehappy.com/">upgrade your browser</a> to improve your experience and security.</p>
+  <![endif]-->
+
+  <!-- Add your site or application content here -->
+  <h2>You water level readings</h2>
+  <script src="js/vendor/modernizr-3.6.0.min.js"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js" integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8=" crossorigin="anonymous"></script>
+  <script>window.jQuery || document.write('<script src="js/vendor/jquery-3.3.1.min.js"><\/script>')</script>
+  <script src="js/plugins.js"></script>
+  <script src="js/main.js"></script>
+  <script>
+    
+    const url = "https://api.particle.io/v1/devices/230021000351353337353037/cm?access_token=7541637dca9e39f02112eb402286f0635529b4c1";
+    const interval = 2000;
+    const readings = [];
+    const minimum = 12;
+    
+    const defaultTemplate = (data) => {
+      const li = document.createElement("li");
+      const text = `Date: ${data.date}, Time: ${data.time}, Water Level: ${data.level}`;
+      const textNode = document.createTextNode(text);
+      li.appendChild(textNode);
+      return li;
+    }
+
+    const errorTemplate = (data) => {
+      const li = document.createElement("li");
+      const text = `Date: ${data.date}, Time: ${data.time}, Water Level: ${data.level}`;
+      const textNode = document.createTextNode(text);
+      li.style = "color: red;";
+      li.appendChild(textNode);
+      return li;
+    }
+
+    const disasterTemplate = (data) => {
+      const h1 = document.createElement("h1");
+      const text = "Heads up: Your car is ruined"; 
+      const textNode = document.createTextNode(text);
+      h1.style = "color: red;";
+      h1.appendChild(textNode);
+      return h1;
+    }
+
+    function present(data) { 
+      console.log(data)
+      var template;
+
+      if(data.level == -1) {
+        template = errorTemplate(data);
+      } else if (data.level < minimum) {
+        template = disasterTemplate(data)
+      } else {
+        template = defaultTemplate(data);
+      } 
+      document.getElementById("readings").appendChild(template); 
+    };
+
+    function formatJson(json)  {
+      const date = new Date(json.coreInfo.last_heard);
+
+      const currentReading =  {
+            date : date.toDateString(),
+            time : date.toLocaleTimeString(),
+            level : json.result 
+          };
+      return currentReading;
+    }
+
+    function getReading(url) {
+      fetch(url)
+      .then(function(response) {
+            return response.json();
+          })
+      .then(function(myJson) {
+        const currentReading = formatJson(myJson);
+        readings.push(currentReading);
+        present(currentReading);
+      });
+    };
+
+    function loadEvery(interval) {
+        window.setInterval(function() {
+          console.log("loader running");
+          getReading(url);
+        }, interval);
+    }
+    loadEvery(interval);
+  </script>
+  <ul id="readings"> </ul>
+</body>
+
+</html>
